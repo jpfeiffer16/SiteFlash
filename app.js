@@ -14,7 +14,7 @@ let masterUrlList = [];
 recurse(baseUrl.href);
 
 // request.get(baseUrl, (err, html) => {
-  
+
 // });
 
 
@@ -34,8 +34,8 @@ function recurse(url) {
       console.error('There was no content for this request');
       return;
     }
-    
-    let {urls, newHtml} = parse(response.body);
+
+    let { urls, newHtml } = parse(response.body);
     writeFile(url, newHtml);
 
     urls.forEach((url) => {
@@ -49,7 +49,7 @@ function recurse(url) {
         }
       }
     });
-    
+
   });
 }
 
@@ -58,7 +58,7 @@ function parse(html) {
   let urls = [];
   let urlRegex = /https?:\/\/.+?(?=( |"))|href=("|').+?("|')|src=("|').+?("|')/g;
   // let urlRegex = /[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
-  
+
 
   // console.log(html);
   // console.log(urlRegex.test(html));
@@ -66,10 +66,11 @@ function parse(html) {
   if (matches != null) {
     urls = matches.map((url) => {
       return url
-        .replace('\'', '')
-        .replace('"', '')
-        .replace('href=', '')
-        .replace('src=', '');
+        .toString()
+        .replace(/href=/g, '')
+        .replace(/src=/g, '')
+        .replace(/\\/g, '')
+        .replace(/"/g, '');
     });
   }
 
@@ -77,7 +78,7 @@ function parse(html) {
     urls,
     newHtml: html
   }
-  
+
 }
 
 function resolveUrl(url) {
@@ -98,7 +99,7 @@ function resolveUrl(url) {
 
 const path = require('path');
 
-function fsTransformUrl(url) {
+function fsTransformUrlToFile(url) {
   //TODO: tranform url to filesystem path here.
   // console.log();
   var parsedUrl = Url.parse(url);
@@ -110,18 +111,30 @@ function fsTransformUrl(url) {
   );
 }
 
+function fsTransformUrlToDir(url) {
+  //TODO: tranform url to filesystem path here.
+  // console.log();
+  var parsedUrl = Url.parse(url);
+  let dirpath = '';
+  let index = parsedUrl.path.lastIndexOf('/');
+  if (index != -1) {
+    dirpath = parsedUrl.path.slice(0, index);
+  }
+  return path.join(
+    __dirname,
+    'sites',
+    parsedUrl.host,
+    dirpath
+  );
+}
+
 
 const mkdirp = require('mkdirp');
 const fs = require('fs');
 
 function writeFile(url, content) {
   var parsedUrl = Url.parse(url);
-  mkdirp.sync(path.join(
-    __dirname,
-    'sites',
-    parsedUrl.host,
-    parsedUrl.path.replace(' ', '_')
-  ));
+  mkdirp.sync(fsTransformUrlToDir(url));6
 
-  fs.writeFile(fsTransformUrl(url), content);
+  fs.writeFile(fsTransformUrlToFile(url), content);
 }
