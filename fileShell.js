@@ -49,28 +49,70 @@ let exportMethod = function(url) {
 function parse(html) {
   //Extract urls and replace with fs-tranformed urls here.
   let urls = [];
-  let urlRegex = /https?:\/\/.+?(?=( |"))|href=("|').+?("|')|src=("|').+?("|')/g;
+  let urlRegex = /https?:\/\/.+?(?=( |"))/g;
+  let hrefRegex = /href=("|').+?("|')/g;
+  let srcRegex = /src=("|').+?("|')/g;
   // let urlRegex = /[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
 
 
   // console.log(html);
   // console.log(urlRegex.test(html));
-  var matches = html.match(urlRegex);
-  if (matches != null) {
-    urls = matches.map((url) => {
-      return url
-        .toString()
-        .replace(/href=/g, '')
-        .replace(/src=/g, '')
-        .replace(/\\/g, '')
-        .replace(/"/g, '');
+  // let matches = html.match(urlRegex);
+  // if (matches != null) {
+  //   urls = matches.map((url) => {
+  //     return url
+  //       .toString()
+  //       // .replace(/href=/g, '')
+  //       // .replace(/src=/g, '')
+  //       // .replace(/\\/g, '')
+  //       // .replace(/"/g, '');
+  //   });
+  // }
+
+  // matches = html.match(hrefRegex);
+  let indexes = [];
+  let match = hrefRegex.exec(html);
+  while (match) {
+    let trPath = match
+      .toString()
+      .replace(/href=/g, '')
+      // .replace(/src=/g, '')
+      .replace(/\\/g, '')
+      .replace(/"/g, '');
+    let newPath = resolveUrl(tranformAndEnsureDiskPath(
+      trPath
+    ));
+    indexes.push({
+      str: `href="${newPath}"`,
+      start: match.index,
+      end: match.index + match[0].length
     });
   }
 
-  return {
-    urls,
-    newHtml: html
+  indexes = [];
+  match = srcRegex.exec(html);
+  while (match) {
+    let trPath = match
+      .toString()
+      // .replace(/href=/g, '')
+      .replace(/src=/g, '')
+      .replace(/\\/g, '')
+      .replace(/"/g, '');
+    let newPath = resolveUrl(tranformAndEnsureDiskPath(
+      trPath
+    ));
+    indexes.push({
+      str: `src="${newPath}"`,
+      start: match.index,
+      end: match.index + match[0].length
+    });
   }
+
+
+  // return {
+  //   urls,
+  //   newHtml: html
+  // }
 
 }
 
@@ -129,6 +171,22 @@ function writeFile(url, content) {
   mkdirp.sync(fsTransformUrlToDir(url));
 
   fs.writeFile(fsTransformUrlToFile(url), content);
+}
+
+function resolveUrl(url) {
+  //TODO: For now just return the url, but in the future, we need to parse it 
+  //and convert relavive urls to absolute ones
+
+  if (url.startsWith('http') == 1) {
+    return url;
+  }
+
+  if (url.startsWith('/')) {
+    url = baseUrl.protocol + "//" + baseUrl.host + url;
+  }
+
+
+  return url;
 }
 
 module.exports = exportMethod;
