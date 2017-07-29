@@ -10,6 +10,7 @@ if (!baseUrl.href) {
 }
 
 let masterUrlList = [];
+let processList = [];
 const FSStream = require('./fileShell');
 
 recurse(baseUrl.href);
@@ -18,21 +19,35 @@ recurse(baseUrl.href);
 
 // });
 
-
+setInterval(() => {
+  let lengthOfList = processList.length;
+  for (let i = 0; i < lengthOfList; i++) {
+    let item = processList[i];
+    if (!item.processed) {
+      
+    }
+  }
+}, 1000);
 
 function recurse(url) {
   masterUrlList.push(url);
-  console.log(url);
-  let stream = FSStream(url);
+  let stream = FSStream(url, baseUrl);
   stream.urlFound((foundUrl) => {
-    console.log(foundUrl);
-    let absUrl = resolveUrl(foundUrl);
+    if (!foundUrl) return;
+    // console.log(foundUrl);
+    let absUrl = foundUrl;
     let parsedUrl = Url.parse(absUrl);
     if (parsedUrl.host == baseUrl.host) {
       if (masterUrlList.indexOf(absUrl) == -1) {
-        setTimeout(() => {
-          recurse(absUrl);
-        }, 1000);
+        masterUrlList.push(absUrl);
+        processList.push({
+          url: absUrl,
+          processed: false
+        });
+        // setTimeout(() => {
+        //   console.log(absUrl);
+        //   recurse(absUrl);
+        // }, 3000);
       }
     }
   });
@@ -77,5 +92,5 @@ function resolveUrl(url) {
   return url;
 }
 
-const path = require('path');
+// const path = require('path');
 
