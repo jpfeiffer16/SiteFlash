@@ -4,133 +4,75 @@ const fs = require('fs');
 const path = require('path');
 const mkdirp = require('mkdirp');
 const Url = require('url');
+const jsdom = require("jsdom");
+const { JSDOM } = jsdom;
 
-let exportMethod = function(url, baseUrl) {
-  let urlFoundCb = null;
+let exportMethod = function(url, content, contentType, parse) {
+  let parsedUrls = [];
+  console.log(contentType);
+  if (parse) {
+    let strRepr = content.toString('utf-8');
 
-  function urlFound(cb) {
-    urlFoundCb = cb;
-  }
-
-  let FSStream = function() {
-    stream.Writable.call(this);
-  }
-  util.inherits(FSStream, stream.Writable);
-
-  FSStream.prototype._write = function (chunk, encoding, done) {
-
-    let {newHtml, urls} = parse(chunk.toString('utf-8'), baseUrl);
-
-    fs.writeFile(fsTransformUrlToFile(url), newHtml, (err) => {
-      if (err) {
-        console.error(err);
-      }
-    });
-    
-    // console.log(urls);
-    if (urls.length > 0 && urlFoundCb != null) {
-      urls.forEach(function(url) { 
-        urlFoundCb(url);
-      });
+    switch(contentType) {
+      case 'text/css':
+        strRepr = parseCss(strRepr, url);
+        break;
+      case 'text/html':
+        strRepr = parseHtml(strRepr, url);
+        break;
     }
-    // fs.writeFile('./test', chunk, { flag: 'a' });
-    done();
+
+
+    // if (~strRepr.indexOf('<body') || ~strRepr.indexOf('<html')) {
+    //   let { urls, newHtml } = parseContent(strRepr, url);
+    //   parsedUrls = urls;
+    //   fs.writeFile(fsTransformUrlToFile(url), newHtml);
+    // } else {
+    //   fs.writeFile(fsTransformUrlToFile(url), content);
+    // }
+    fs.writeFile(fsTransformUrlToFile(url), newHtml);
+  } else {
+    fs.writeFile(fsTransformUrlToFile(url), content);
   }
 
-  FSStream.prototype.urlFound = urlFound;
-
-  // let stream = 
-  // stream.on('end', () => {
-  //   console.log('Done');
-  // });
-  return new FSStream();
+  return {
+    urls: parsedUrls
+  };
 }
 
-function parse(html, baseUrl) {
-  //Extract urls and replace with fs-tranformed urls here.
+function parseHtml(html, baseUrl) {
   let urls = [];
-  let urlRegex = /https?:\/\/.+?(?=( |"))/g;
-  let hrefRegex = /href=("|').+?("|')/g;
-  let srcRegex = /src=("|').+?("|')/g;
-  // let urlRegex = /[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
 
+  let dom = new JSDOM(html);
 
-  // console.log(html);
-  // console.log(urlRegex.test(html));
-  let matches = html.match(urlRegex);
-  if (matches != null) {
-    urls = matches.map((url) => {
-      return url
-        .toString()
-        // .replace(/href=/g, '')
-        // .replace(/src=/g, '')
-        // .replace(/\\/g, '')
-        // .replace(/"/g, '');
-    });
-  }
-
-  // matches = html.match(hrefRegex);
-  let indexes = [];
-  let match = hrefRegex.exec(html);
-  while (match) {
-    // let trPath = match
-
-    // let newPath = tranformAndEnsureDiskPath(resolveUrl(baseUrl,
-    //   trPath
-    // ));
-    indexes.push({
-      str: match[0],
-      start: match.index,
-      end: match.index + match[0].length
-    });
-    match = hrefRegex.exec(html);
-  }
-  indexes.forEach((indexOb) => {
-    urls.push(resolveUrl(baseUrl,
-      indexOb.str
-        .toString()
-        .replace(/href=/g, '')
-        .replace(/src=/g, '')
-        .replace(/\\/g, '')
-        .replace(/"/g, '')
-    ));
+  //href's
+  let hrefElements = dom.window.document.querySelectorAll('[href]');
+  hrefElements.forEach((el) => {
+    let foundUrl = Url.resolve(baseUrl, el.href);
+    urls.push(foundUrl);
+    //TODO: Transform and replace here
+    el.href = fsTransformUrlToFile(foundUrl);
   });
 
-  indexes = [];
-  match = srcRegex.exec(html);
-  while (match) {
-    // let newPath = tranformAndEnsureDiskPath(resolveUrl(baseUrl,
-    //   trPath
-    // ));
-    indexes.push({
-      str: match[0],
-      start: match.index,
-      end: match.index + match[0].length
-    });
-    match = hrefRegex.exec(html);
-  }
-  indexes.forEach((indexOb) => {
-    urls.push(resolveUrl(baseUrl,
-      indexOb.str
-        .toString()
-        .replace(/href=/g, '')
-        .replace(/src=/g, '')
-        .replace(/\\/g, '')
-        .replace(/"/g, '')
-    ));
+  //src's
+  let srcElements = dom.window.document.querySelectorAll('[src]');
+  srcElements.forEach((el) => {
+    let foundUrl = Url.resolve(baseUrl, el.src);
+    urls.push(foundUrl);
+    //TODO: Transform and replace here
+    el.src = fsTransformUrlToFile(foundUrl);
   });
 
-  urls
-    .filter((urlstr) => { return urlstr != null; })
-    .forEach((urlstr) => {
-      tranformAndEnsureDiskPath(urlstr);
-    });
+  // dom.window.close();
 
   return {
     urls,
-    newHtml: html
+    newHtml: dom.serialize()
   }
+}
 
+function parseCss(css, baseUrl) {
+  //TODO: Do stuff here
 }
 
 function tranformAndEnsureDiskPath(url) {
@@ -145,37 +87,37 @@ function tranformAndEnsureDiskPath(url) {
   return fsTransformUrlToFile(url);
 }
 
-// function fsTransformUrlToFile(url) {
-//   //TODO: tranform url to filesystem path here.
-//   // console.log();
-//   let crypto = require('crypto');
-
-//   let md5sum = crypto.createHash('md5');
-//   md5sum.update(url);
-  
-//   var parsedUrl = Url.parse(url);
-//   return path.join(
-//     __dirname,
-//     'sites',
-//     md5sum.digest('hex')
-//   );
-// }
-
 function fsTransformUrlToFile(url) {
   //TODO: tranform url to filesystem path here.
   // console.log();
+  let crypto = require('crypto');
+
+  let md5sum = crypto.createHash('md5');
+  md5sum.update(url);
+  
   var parsedUrl = Url.parse(url);
-  let resultPath = path.join(
+  return path.join(
     __dirname,
     'sites',
-    parsedUrl.host,
-    parsedUrl.path == '/' ? 'index.html' : parsedUrl.path.replace(' ', '_')
+    md5sum.digest('hex')
   );
-  if (fs.existsSync(resultPath)) {
-    resultPath += parseInt(Math.random() * 100).toString();
-  }
-  return resultPath;
 }
+
+// function fsTransformUrlToFile(url) {
+//   //TODO: tranform url to filesystem path here.
+//   // console.log();
+//   var parsedUrl = Url.parse(url);
+//   let resultPath = path.join(
+//     __dirname,
+//     'sites',
+//     parsedUrl.host,
+//     parsedUrl.path == '/' ? 'index.html' : parsedUrl.path.replace(' ', '_')
+//   );
+//   if (fs.existsSync(resultPath)) {
+//     resultPath += parseInt(Math.random() * 100).toString();
+//   }
+//   return resultPath;
+// }
 
 function fsTransformUrlToDir(url) {
   //TODO: tranform url to filesystem path here.
@@ -213,24 +155,24 @@ function fsTransformUrlToDir(url) {
 //   fs.writeFile(fsTransformUrlToFile(url), content);
 // }
 
-function resolveUrl(baseUrl, url) {
+// function resolveUrl(baseUrl, url) {
   
-  //TODO: For now just return the url, but in the future, we need to parse it 
-  //and convert relavive urls to absolute ones
+//   //TODO: For now just return the url, but in the future, we need to parse it 
+//   //and convert relavive urls to absolute ones
 
-  if (url.startsWith('http') == 1) {
-    return url;
-  }
+//   if (url.startsWith('http') == 1) {
+//     return url;
+//   }
 
-  if (url.startsWith('/')) {
-    url = baseUrl.protocol + "//" + baseUrl.host + url;
-  } else {
-    //TEMP
-    return null;
-  }
+//   if (url.startsWith('/')) {
+//     url = baseUrl.protocol + "//" + baseUrl.host + url;
+//   } else {
+//     //TEMP
+//     return null;
+//   }
 
 
-  return url;
-}
+//   return url;
+// }
 
 module.exports = exportMethod;
