@@ -16,7 +16,7 @@ module.exports = function(baseUrl, siteName) {
 
   let masterUrlList = [];
   // let progressList = [];
-  const FSStream = require('./fileShell');
+  let shell = fileShell(siteName);
 
   recurse(baseUrl.href);
 
@@ -33,11 +33,11 @@ module.exports = function(baseUrl, siteName) {
         return;
       }
       if (Url.parse(url).host == baseUrl.host) {
-        let newUrls = fileShell(
+        let newUrls = shell.process(
           url,
           response.body,
           response.headers['content-type'],
-          siteName,
+          // siteName,
           true
         ).urls;
         // console.log(url);
@@ -52,11 +52,11 @@ module.exports = function(baseUrl, siteName) {
           }
         });
       } else {
-        fileShell(
+        shell.process(
           url,
           response.body,
           response.headers['content-type'],
-          siteName,
+          // siteName,
           false
         );
         // resolve();

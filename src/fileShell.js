@@ -14,26 +14,34 @@ let doneWritting = function(err) {
   }
 }
 
-let exportMethod = function(url, content, contentType, siteName, parse) {
-  let parsedUrls = [];
-  // console.log(contentType);
-  if (parse && contentType) {
-    let strRepr = content.toString('utf-8');
+let exportMethod = function(siteName) {
 
-    if (~contentType.indexOf('text/html')) {
-      let result = parseHtml(strRepr, url);
-      parsedUrls = result.urls;
-      fs.writeFile(fsTransformUrlToFile(url).fsPath, result.newContent, doneWritting);
-    } else if(~contentType.indexOf('text/css')) { 
-      let result = parseCss(strRepr, url);
-      parsedUrls = result.urls;
-      fs.writeFile(fsTransformUrlToFile(url).fsPath, result.newContent, doneWritting);
+  let process = function(url, content, contentType, parse) {
+    let parsedUrls = [];
+    // console.log(contentType);
+    if (parse && contentType) {
+      let strRepr = content.toString('utf-8');
+
+      if (~contentType.indexOf('text/html')) {
+        let result = parseHtml(strRepr, url);
+        parsedUrls = result.urls;
+        fs.writeFile(fsTransformUrlToFile(url).fsPath, result.newContent, doneWritting);
+      } else if(~contentType.indexOf('text/css')) { 
+        let result = parseCss(strRepr, url);
+        parsedUrls = result.urls;
+        fs.writeFile(fsTransformUrlToFile(url).fsPath, result.newContent, doneWritting);
+      } else {
+        fs.writeFile(fsTransformUrlToFile(url).fsPath, content, doneWritting);
+      }
     } else {
       fs.writeFile(fsTransformUrlToFile(url).fsPath, content, doneWritting);
     }
-  } else {
-    fs.writeFile(fsTransformUrlToFile(url).fsPath, content, doneWritting);
+
+      return {
+        urls: parsedUrls
+      };
   }
+
 
   function parseHtml(html, baseUrl) {
     let urls = [];
@@ -123,8 +131,8 @@ let exportMethod = function(url, content, contentType, siteName, parse) {
   }
 
   return {
-    urls: parsedUrls
-  };
+    process
+  }
 }
 
 module.exports = exportMethod;
