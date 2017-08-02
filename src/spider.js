@@ -33,19 +33,32 @@ module.exports = function(baseUrl, siteName) {
         return;
       }
       if (Url.parse(url).host == baseUrl.host) {
-        let newUrls = fileShell(url, response.body, response.headers['content-type'], siteName, true).urls;
+        let newUrls = fileShell(
+          url,
+          response.body,
+          response.headers['content-type'],
+          siteName,
+          true
+        ).urls;
         // console.log(url);
         newUrls.forEach((url) => {
-          if (!(~masterUrlList.indexOf(url))) {
+          if (!(~masterUrlList.indexOf(url)) && !url.startsWith('mailto:') && !url.startsWith('tel:')) {
             masterUrlList.push(url);
             setTimeout(() => {
               // resolve();
+              console.log(url);
               recurse(url);
             }, 1000);
           }
         });
       } else {
-        fileShell(url, response.body, response.headers['content-type'], siteName, false);
+        fileShell(
+          url,
+          response.body,
+          response.headers['content-type'],
+          siteName,
+          false
+        );
         // resolve();
       }
     });

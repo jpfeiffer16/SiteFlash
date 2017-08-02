@@ -15,7 +15,7 @@ if (!program.url) {
 }
 
 if (!program.site) {
-  program.site = Date.now().toString();
+  program.site = new Date().toISOString();
 }
 
 require('./src/spider')(program.url, program.site);
