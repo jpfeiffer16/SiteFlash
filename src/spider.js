@@ -34,7 +34,7 @@ module.exports = function(baseUrl, siteName) {
       }
       if (Url.parse(url).host == baseUrl.host) {
         let newUrls = fileShell(url, response.body, response.headers['content-type'], siteName, true).urls;
-        console.log(url);
+        // console.log(url);
         newUrls.forEach((url) => {
           if (!(~masterUrlList.indexOf(url))) {
             masterUrlList.push(url);
@@ -68,7 +68,7 @@ module.exports = function(baseUrl, siteName) {
           console.error(err);
           return;
         }
-        console.log('index.html created');
+        // console.log('index.html created');
       }
     );
   }, 3000);

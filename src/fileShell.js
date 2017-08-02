@@ -7,44 +7,33 @@ const stream = require('stream'),
       jsdom = require("jsdom"),
       { JSDOM } = jsdom;
 
+let doneWritting = function(err) {
+  //NOTE: Do more stuff here if necessary
+  if (err) {
+    console.error(err);
+  }
+}
+
 let exportMethod = function(url, content, contentType, siteName, parse) {
   let parsedUrls = [];
-  console.log(contentType);
+  // console.log(contentType);
   if (parse && contentType) {
     let strRepr = content.toString('utf-8');
-    // let result = {
-    //   urls: [],
-    //   newContent: ''
-    // };
-
-    // switch(contentType) {
-    //   case 'text/css':
-    //     result = parseCss(strRepr, url);
-    //     break;
-    //   case 'text/html':
-    //     result = parseHtml(strRepr, url);
-    //     break;
-    // }
 
     if (~contentType.indexOf('text/html')) {
       let result = parseHtml(strRepr, url);
       parsedUrls = result.urls;
-      fs.writeFile(fsTransformUrlToFile(url).fsPath, result.newContent);
+      fs.writeFile(fsTransformUrlToFile(url).fsPath, result.newContent, doneWritting);
     } else if(~contentType.indexOf('text/css')) { 
       let result = parseCss(strRepr, url);
       parsedUrls = result.urls;
-      fs.writeFile(fsTransformUrlToFile(url).fsPath, result.newContent);
+      fs.writeFile(fsTransformUrlToFile(url).fsPath, result.newContent, doneWritting);
     } else {
-      fs.writeFile(fsTransformUrlToFile(url).fsPath, content);
+      fs.writeFile(fsTransformUrlToFile(url).fsPath, content, doneWritting);
     }
   } else {
-    fs.writeFile(fsTransformUrlToFile(url).fsPath, content);
+    fs.writeFile(fsTransformUrlToFile(url).fsPath, content, doneWritting);
   }
-
-  // let parseHtml = parseHtml;
-  // let parseCss = parseCss;
-  // let fsTransformUrlToFile = fsTransformUrlToFile;
-
 
   function parseHtml(html, baseUrl) {
     let urls = [];
@@ -65,7 +54,6 @@ let exportMethod = function(url, content, contentType, siteName, parse) {
     srcElements.forEach((el) => {
       let foundUrl = Url.resolve(baseUrl, el.src);
       urls.push(foundUrl);
-      //TODO: Transform and replace here
       el.src = fsTransformUrlToFile(foundUrl).webPath;
     });
 
@@ -89,7 +77,6 @@ let exportMethod = function(url, content, contentType, siteName, parse) {
   }
 
   function parseCss(css, baseUrl) {
-    //TODO: Do stuff here
     let urls = [];
     let newContent = css;
     let urlRegex = /url\(.*?('|")?\)/g
@@ -104,8 +91,8 @@ let exportMethod = function(url, content, contentType, siteName, parse) {
         .substring(0, match.index) + 
           "url(\"" + fsTransformUrlToFile(foundUrl).webPath + "\")" +
           newContent.substring(match.index + match[0].length);
-      console.log('CSS:');
-      console.log(finalMatch);
+      // console.log('CSS:');
+      // console.log(finalMatch);
     }
 
     return {
@@ -115,8 +102,6 @@ let exportMethod = function(url, content, contentType, siteName, parse) {
   }
 
   function fsTransformUrlToFile(url) {
-    //TODO: tranform url to filesystem path here.
-    // console.log();
     let crypto = require('crypto');
 
     let md5sum = crypto.createHash('md5');
@@ -137,71 +122,9 @@ let exportMethod = function(url, content, contentType, siteName, parse) {
     }
   }
 
-
   return {
     urls: parsedUrls
   };
-}
-
-
-
-function tranformAndEnsureDiskPath(url) {
-  let checkPath = fsTransformUrlToDir(url);
-  if (fs.existsSync(checkPath)) {
-    if (fs.statSync(checkPath).isFile()) {
-
-    }
-  } else {
-    mkdirp.sync(checkPath);
-  }
-  return fsTransformUrlToFile(url).fsPath;
-}
-
-
-
-// function fsTransformUrlToFile(url) {
-//   //TODO: tranform url to filesystem path here.
-//   // console.log();
-//   var parsedUrl = Url.parse(url);
-//   let resultPath = path.join(
-//     __dirname,
-//     'sites',
-//     parsedUrl.host,
-//     parsedUrl.path == '/' ? 'index.html' : parsedUrl.path.replace(' ', '_')
-//   );
-//   if (fs.existsSync(resultPath)) {
-//     resultPath += parseInt(Math.random() * 100).toString();
-//   }
-//   return resultPath;
-// }
-
-function fsTransformUrlToDir(url) {
-  //TODO: tranform url to filesystem path here.
-  // console.log();
-
-  // let checkPath = fsTransformUrlToDir(url);
-
-
-  var parsedUrl = Url.parse(url);
-  let dirpath = '';
-  let index = parsedUrl.path.lastIndexOf('/');
-  if (index != -1) {
-    dirpath = parsedUrl.path.slice(0, index);
-  }
-  let checkPath = path.join(
-    __dirname,
-    'sites',
-    parsedUrl.host,
-    dirpath
-  );
-
-  if (fs.existsSync(checkPath)) {
-    if (fs.statSync(checkPath).isFile()) {
-      checkPath += parseInt(Math.random() * 100).toString();
-    }
-  }
-
-  return checkPath;
 }
 
 module.exports = exportMethod;
