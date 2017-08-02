@@ -16,7 +16,7 @@
       "name": "Launch Program",
       "program": "${workspaceRoot}/app.js",
       "args": [
-        "http://basesite-aon-miy-dev-2016.bluemod.us"
+        // "http://basesite-aon-miy-dev-2016.bluemod.us"
         // "http://truman-aon-miy-dev-2016.bluemod.us"
         // "http://truman-aon-miy-dev-2016.bluemod.us/?phasetest=2"
       ]

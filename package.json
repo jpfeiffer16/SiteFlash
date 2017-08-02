@@ -9,9 +9,8 @@
   "author": "Joe Pfeiffer",
   "license": "ISC",
   "dependencies": {
+    "bluebird": "^3.5.0",
     "commander": "^2.11.0",
-    "css": "^2.2.1",
-    "file-type": "^5.2.0",
     "jsdom": "^11.1.0",
     "mkdirp": "^0.5.1",
     "request": "^2.81.0"
