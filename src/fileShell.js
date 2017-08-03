@@ -7,16 +7,29 @@ const stream = require('stream'),
       jsdom = require("jsdom"),
       { JSDOM } = jsdom;
 
-let doneWritting = function(err) {
-  //NOTE: Do more stuff here if necessary
-  if (err) {
-    console.error(err);
-  }
-}
-
 let exportMethod = function(siteName) {
+  let dirpath = path.join(
+    './',
+    'sites',
+    siteName
+  );
+  mkdirp.sync(dirpath);
+  let logStream = fs.createWriteStream(
+    path.join(
+      dirpath,
+      'log.txt'
+    )
+  );
 
-  let process = function(url, content, contentType, parse) {
+  let doneWritting = function(err) {
+    //NOTE: Do more stuff here if necessary
+    if (err) {
+      // console.error(err);
+      log(err, console.error);
+    }
+  }
+
+  function process(url, content, contentType, parse) {
     let parsedUrls = [];
     // console.log(contentType);
     if (parse && contentType) {
@@ -25,16 +38,24 @@ let exportMethod = function(siteName) {
       if (~contentType.indexOf('text/html')) {
         let result = parseHtml(strRepr, url);
         parsedUrls = result.urls;
-        fs.writeFile(fsTransformUrlToFile(url).fsPath, result.newContent, doneWritting);
+        fs.writeFile(
+          fsTransformUrlToFile(url).fsPath, result.newContent, doneWritting
+        );
       } else if(~contentType.indexOf('text/css')) { 
         let result = parseCss(strRepr, url);
         parsedUrls = result.urls;
-        fs.writeFile(fsTransformUrlToFile(url).fsPath, result.newContent, doneWritting);
+        fs.writeFile(
+          fsTransformUrlToFile(url).fsPath, result.newContent, doneWritting
+        );
       } else {
-        fs.writeFile(fsTransformUrlToFile(url).fsPath, content, doneWritting);
+        fs.writeFile(
+          fsTransformUrlToFile(url).fsPath, content, doneWritting
+        );
       }
     } else {
-      fs.writeFile(fsTransformUrlToFile(url).fsPath, content, doneWritting);
+      fs.writeFile(
+        fsTransformUrlToFile(url).fsPath, content, doneWritting
+      );
     }
 
       return {
@@ -42,6 +63,10 @@ let exportMethod = function(siteName) {
       };
   }
 
+  function log(obj, cb) {
+    logStream.write(`${ obj }\n`);
+    cb(obj);
+  }
 
   function parseHtml(html, baseUrl) {
     let urls = [];
@@ -51,10 +76,11 @@ let exportMethod = function(siteName) {
     //href's
     let hrefElements = dom.window.document.querySelectorAll('[href]');
     hrefElements.forEach((el) => {
-      let foundUrl = Url.resolve(baseUrl, el.href);
-      urls.push(foundUrl);
-      //TODO: Transform and replace here
-      el.href = fsTransformUrlToFile(foundUrl).webPath;
+      if (el.href != '#' && !el.href.startsWith('javascript:')) {
+        let foundUrl = Url.resolve(baseUrl, el.href);
+        urls.push(foundUrl);
+        el.href = fsTransformUrlToFile(foundUrl).webPath;
+      }
     });
 
     //src's
@@ -131,7 +157,8 @@ let exportMethod = function(siteName) {
   }
 
   return {
-    process
+    process,
+    log
   }
 }
 

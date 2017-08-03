@@ -1,3 +1,5 @@
 node_modules/
 sites/
+exports/
 .vscode/
+.zip

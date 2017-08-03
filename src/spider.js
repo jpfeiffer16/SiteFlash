@@ -29,7 +29,8 @@ module.exports = function(baseUrl, siteName) {
       encoding: null
     }, (err, response) => {
       if (err) {
-        console.error(err);
+        // console.error(err);
+        shell.log(err, console.error);
         return;
       }
       if (Url.parse(url).host == baseUrl.host) {
@@ -42,7 +43,11 @@ module.exports = function(baseUrl, siteName) {
         ).urls;
         // console.log(url);
         newUrls.forEach((url) => {
-          if (!(~masterUrlList.indexOf(url)) && !url.startsWith('mailto:') && !url.startsWith('tel:')) {
+          if (
+            !(~masterUrlList.indexOf(url)) && 
+            !url.startsWith('mailto:') &&
+            !url.startsWith('tel:')
+          ) {
             masterUrlList.push(url);
             setTimeout(() => {
               // resolve();
@@ -78,10 +83,11 @@ module.exports = function(baseUrl, siteName) {
       path.join('./', 'sites', siteName,  'index.html'), 
       (err) => {
         if (err) {
-          console.error(err);
+          // console.error(err);
+          shell.log(err, console.error);
           return;
         }
-        // console.log('index.html created');
+        shell.log(`index.html -> ${ hash }`, console.log);
       }
     );
   }, 3000);
