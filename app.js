@@ -10,15 +10,19 @@ program
   })
   .parse(process.argv);
 
-if (!program.site) {
-  program.site = new Date().toISOString();
-}
-
 if (program.export) {
-  let exporter = require('./src/exporter')(program.site);
-  exporter.exportSite(() => {
-    console.log('Export done.');
-  });
+  let Exporter = require('./src/exporter');
+  if (program.site) {
+    let exporter = Exporter(program.site);
+    exporter.exportSite((exportFile) => {
+      console.log('Export done.');
+      console.log(exportFile);
+    });
+  } else {
+    Exporter.exportAllSites((exportFile) => {
+      console.log(exportFile);
+    });
+  }
 } else {
   if (!program.url) {
     console.error('Must include a url');

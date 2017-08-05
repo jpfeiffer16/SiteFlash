@@ -39,22 +39,30 @@ let exportMethod = function(siteName) {
         let result = parseHtml(strRepr, url);
         parsedUrls = result.urls;
         fs.writeFile(
-          fsTransformUrlToFile(url).fsPath, result.newContent, doneWritting
+          fsTransformUrlToFile(url).fsPath,
+          result.newContent,
+          doneWritting
         );
       } else if(~contentType.indexOf('text/css')) { 
         let result = parseCss(strRepr, url);
         parsedUrls = result.urls;
         fs.writeFile(
-          fsTransformUrlToFile(url).fsPath, result.newContent, doneWritting
+          fsTransformUrlToFile(url).fsPath,
+          result.newContent,
+          doneWritting
         );
       } else {
         fs.writeFile(
-          fsTransformUrlToFile(url).fsPath, content, doneWritting
+          fsTransformUrlToFile(url).fsPath,
+          content,
+          doneWritting
         );
       }
     } else {
       fs.writeFile(
-        fsTransformUrlToFile(url).fsPath, content, doneWritting
+        fsTransformUrlToFile(url).fsPath,
+        content,
+        doneWritting
       );
     }
 
@@ -123,10 +131,8 @@ let exportMethod = function(siteName) {
       urls.push(foundUrl);
       newContent = newContent
         .substring(0, match.index) + 
-          "url(\"" + fsTransformUrlToFile(foundUrl).webPath + "\")" +
+          `url("${ fsTransformUrlToFile(foundUrl).webPath}")` +
           newContent.substring(match.index + match[0].length);
-      // console.log('CSS:');
-      // console.log(finalMatch);
     }
 
     return {
@@ -137,17 +143,18 @@ let exportMethod = function(siteName) {
 
   function fsTransformUrlToFile(url) {
     let crypto = require('crypto');
-
     let md5sum = crypto.createHash('md5');
+
     md5sum.update(url);
-    
-    var parsedUrl = Url.parse(url);
+
+    let parsedUrl = Url.parse(url);
     let hash = md5sum.digest('hex');
     let dirPath = path.join(
       './',
       'sites',
       siteName
     );
+    
     mkdirp.sync(dirPath);
     
     return {
