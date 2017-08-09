@@ -1,10 +1,9 @@
 const request = require('request'),
       Url = require('url'),
-      fileShell = require('./fileShell');
-
-// var Promise = require("bluebird");
-
-// let baseUrl = Url.parse(process.argv[2]);
+      fileShell = require('./fileShell'),
+      fs = require('fs'),
+      path = require('path'),
+      crypto = require('crypto');
 
 module.exports = function(baseUrl, siteName) {
   baseUrl = Url.parse(baseUrl);
@@ -15,21 +14,20 @@ module.exports = function(baseUrl, siteName) {
   }
 
   let masterUrlList = [];
-  // let progressList = [];
   let shell = fileShell(siteName);
 
-  recurse(baseUrl.href);
+  recurse(baseUrl.href, (state) => {
+    console.log('Linking index');
+    linkIndex();
+  });
 
-  function recurse(url) {
-    // var promise = new Promise((resolve, reject) => {
-    // progressList.push(promise);
+  function recurse(url, cb) {
     masterUrlList.push(url);
     request.get({
       url,
       encoding: null
     }, (err, response) => {
       if (err) {
-        // console.error(err);
         shell.log(err, console.error);
         return;
       }
@@ -38,10 +36,8 @@ module.exports = function(baseUrl, siteName) {
           url,
           response.body,
           response.headers['content-type'],
-          // siteName,
           true
         ).urls;
-        // console.log(url);
         newUrls.forEach((url) => {
           if (
             !(~masterUrlList.indexOf(url)) && 
@@ -52,31 +48,29 @@ module.exports = function(baseUrl, siteName) {
           ) {
             masterUrlList.push(url);
             setTimeout(() => {
-              // resolve();
               console.log(url);
               recurse(url);
             }, 1000);
           }
         });
+        if (cb) {
+          cb({
+            response,
+            url: Url.parse(url)
+          });
+        }
       } else {
         shell.process(
           url,
           response.body,
           response.headers['content-type'],
-          // siteName,
           false
         );
-        // resolve();
       }
     });
-
-    // }); 
   }
 
-  setTimeout(() => {
-    const fs = require('fs');
-    const path = require('path');
-    const crypto = require('crypto');
+  function linkIndex() {
     let md5sum = crypto.createHash('md5');
     md5sum.update(baseUrl.href);
     let hash = md5sum.digest('hex');
@@ -85,16 +79,11 @@ module.exports = function(baseUrl, siteName) {
       path.join('./', 'sites', siteName,  'index.html'), 
       (err) => {
         if (err) {
-          // console.error(err);
           shell.log(err, console.error);
           return;
         }
         shell.log(`index.html -> ${ hash }`, console.log);
       }
     );
-  }, 3000);
-
-  // Promise.all(progressList).then(() => {
-  //   console.log('All Done!');
-  // });
+  }
 }

@@ -3,7 +3,6 @@ const fs = require('fs'),
       path = require('path'),
       mkdirp = require('mkdirp'),
       ProgressBar = require('ascii-progress');
-      multimeter = require('multimeter');
 
 let siteExporter = function(siteName) {
   function exportSite(cb) {
