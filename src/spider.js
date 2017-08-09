@@ -46,6 +46,8 @@ module.exports = function(baseUrl, siteName) {
           if (
             !(~masterUrlList.indexOf(url)) && 
             !url.startsWith('mailto:') &&
+            !url.startsWith('about:') &&
+            !url.startsWith('data:') &&
             !url.startsWith('tel:')
           ) {
             masterUrlList.push(url);
