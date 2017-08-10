@@ -66,9 +66,9 @@ let exportMethod = function(siteName) {
       );
     }
 
-      return {
-        urls: parsedUrls
-      };
+    return {
+      urls: parsedUrls
+    };
   }
 
   function log(obj, cb) {
@@ -110,6 +110,9 @@ let exportMethod = function(siteName) {
       }
     });
 
+    let comment = dom.window.document.createComment(`PAGE: ${ baseUrl }`);
+    dom.window.document.appendChild(comment);
+    
     // dom.window.close();
 
     return {

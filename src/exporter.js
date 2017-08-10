@@ -1,8 +1,16 @@
 const fs = require('fs'),
       archiver = require('archiver'),
       path = require('path'),
-      mkdirp = require('mkdirp'),
-      ProgressBar = require('ascii-progress');
+      mkdirp = require('mkdirp');
+
+let ProgressBar = null;
+
+//Optional progress bar
+try {
+  ProgressBar = require('ascii-progress');
+} catch(err) {
+  ProgressBar = null;
+}
 
 let siteExporter = function(siteName) {
   function exportSite(cb) {
@@ -28,7 +36,6 @@ let siteExporter = function(siteName) {
       zlib: { level: 9 }
     });
 
-    
     archive.pipe(output);
 
     fs.readdir(siteDir, function(err, files) {
@@ -36,13 +43,21 @@ let siteExporter = function(siteName) {
         console.error(err);
         process.exit(1);
       }
-      let bar = new ProgressBar('Zipping [:bar]', { total: files.length });
+      let bar = ProgressBar ?
+        new ProgressBar('Zipping [:bar]', { total: files.length }) :
+        null;
       output.on('close', () => {
-        bar.clear();
+        if (bar) {
+          bar.clear();
+        }
         cb(exportPath);
       });
       archive.on('progress', ((e) => {
-        bar.tick();
+        if (bar) {
+          bar.tick();
+        } else {
+          console.log(`${ e.entries.processed }/${ files.length }`);
+        }
       }));
 
       archive.directory(
