@@ -20,4 +20,4 @@ A tool for cloning sites locally
 `node app.js -s test -e`
 
 ### Export all sites
-`node app.js -s test -e`
+`node app.js -e`
