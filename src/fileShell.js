@@ -145,12 +145,15 @@ let exportMethod = function(siteName) {
   }
 
   function fsTransformUrlToFile(url) {
+    const URL = require('url');
+    let parsedUrl = Url.parse(url);
+    url = parsedUrl.path;
+    
     let crypto = require('crypto');
     let md5sum = crypto.createHash('md5');
 
     md5sum.update(url);
 
-    let parsedUrl = Url.parse(url);
     let hash = md5sum.digest('hex');
     let dirPath = path.join(
       './',

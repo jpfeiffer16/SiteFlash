@@ -9,6 +9,7 @@ let ProgressBar = null;
 try {
   ProgressBar = require('ascii-progress');
 } catch(err) {
+  console.error(err);
   ProgressBar = null;
 }
 

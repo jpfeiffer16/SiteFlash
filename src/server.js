@@ -4,6 +4,23 @@ const http = require('http'),
       fs = require('fs');
 
 
+function fsTransformUrlToFileName(url) {
+  const URL = require('url');
+  let urlObj = URL.parse(url);
+  url = urlObj.path;
+  let crypto = require('crypto');
+  let md5sum = crypto.createHash('md5');
+  md5sum.update(url);
+
+  let hash = md5sum.digest('hex');
+  
+  return hash;
+  // return {
+  //   fsPath: path.join(dirPath, hash),
+  //   webPath: hash
+  // }
+}
+
 module.exports = function(siteName, port) {
   port = port || 80;
   let dirName = path.join('./', 'sites', siteName);
@@ -15,7 +32,7 @@ module.exports = function(siteName, port) {
       fs.createReadStream(indexFile).pipe(res);
     } else if (req.path.match(/^[a-f0-9]{32}$/)) {
       //Respond with the proper hashed file here
-      fs.createReadStream(path.join(dirName, req.path)).pipe(res);
+      fs.createReadStream(path.join(dirName, fsTransformUrlToFileName(req.path))).pipe(res);
     } else {
       //Set 404 status and return an error response
       res.status = 404;
