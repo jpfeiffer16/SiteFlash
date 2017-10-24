@@ -4,6 +4,7 @@ program
   .version(require('./package.json').version)
   .option('-s, --site [string]', 'site name')
   .option('-e, --export [boolean]', 'export site')
+  .option('-w, --web [boolean]', 'serve site with a web server')
   .arguments('[url]')
   .action((url) => {
     program.url = url;
@@ -22,6 +23,13 @@ if (program.export) {
     Exporter.exportAllSites((exportFile) => {
       console.log(exportFile);
     });
+  }
+} else if (program.web) {
+  if (program.site) {
+    require('./src/server')(program.site, 8080);
+  } else {
+    console.error('You must provide a site name');
+    process.exit(1);
   }
 } else {
   if (!program.url) {

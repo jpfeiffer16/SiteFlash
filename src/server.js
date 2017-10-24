@@ -27,10 +27,10 @@ module.exports = function(siteName, port) {
   let indexFile = path.join(dirName, 'index.html');
 
   let requestHandler = function(req, res) {
-    if (request.path == '' || request.path == '/') {
+    if (req.url == '' || req.url == '/') {
       //Respond with the index file
       fs.createReadStream(indexFile).pipe(res);
-    } else if (req.path.match(/^[a-f0-9]{32}$/)) {
+    } else if (req.url.match(/^[a-f0-9]{32}$/)) {
       //Respond with the proper hashed file here
       fs.createReadStream(path.join(dirName, fsTransformUrlToFileName(req.path))).pipe(res);
     } else {
