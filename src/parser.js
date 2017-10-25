@@ -1,9 +1,18 @@
+const jsdom = require("jsdom"),
+      { JSDOM } = jsdom;
+
 let Parser = function() {
   //Generic parse method
-  function parse(url, contentType, replaceMethod) {
+  function parse(content, contentType, replaceMethod) {
     //Call out to specific parsers here.
+    let result = null;
+    if (~contentType.indexOf('text/html')) {
+      result = parseHtml(content, replaceMethod);
+    } else if(~contentType.indexOf('text/css')) { 
+      result = parseCss(content, replaceMethod);
+    }
+    return result;
   }
-
 
   function parseHtml(html, replaceMethod) {
     let urls = [];
@@ -14,18 +23,18 @@ let Parser = function() {
     let hrefElements = dom.window.document.querySelectorAll('[href]');
     hrefElements.forEach((el) => {
       if (el.href != '#' && !el.href.startsWith('javascript:')) {
-        let foundUrl = Url.resolve(baseUrl, el.href);
-        urls.push(foundUrl);
-        el.href = replaceMethod(foundUrl);
+        // let foundUrl = Url.resolve(baseUrl, el.href);
+        // urls.push(foundUrl);
+        el.href = replaceMethod(el.href);
       }
     });
 
     //src's
     let srcElements = dom.window.document.querySelectorAll('[src]');
     srcElements.forEach((el) => {
-      let foundUrl = Url.resolve(baseUrl, el.src);
-      urls.push(foundUrl);
-      el.src = replaceMethod(foundUrl);
+      // let foundUrl = Url.resolve(baseUrl, el.src);
+      // urls.push(foundUrl);
+      el.src = replaceMethod(el.src);
     });
 
     //style's
@@ -34,13 +43,13 @@ let Parser = function() {
       let results = parseCss(el.getAttribute('style'), replaceMethod);
 
       el.setAttribute('style', results.newContent);
-      if (results.urls.length > 0) {
-        urls.concat(results);
-      }
+      // if (results.urls.length > 0) {
+      //   urls.concat(results);
+      // }
     });
 
-    let comment = dom.window.document.createComment(`PAGE: ${ baseUrl }`);
-    dom.window.document.appendChild(comment);
+    // let comment = dom.window.document.createComment(`PAGE: ${ baseUrl }`);
+    // dom.window.document.appendChild(comment);
     
     // dom.window.close();
 
@@ -60,7 +69,7 @@ let Parser = function() {
       let finalMatch = match[0]
         .replace(/url\(("|')?/g, '')
         .replace(/("|')?\)/g, '');
-      let foundUrl = Url.resolve(baseUrl, finalMatch)
+      // let foundUrl = Url.resolve(baseUrl, finalMatch)
       urls.push(foundUrl);
       newContent = newContent
         .substring(0, match.index) + 
@@ -74,6 +83,9 @@ let Parser = function() {
     }
   }
 
+  return {
+    parse
+  };
 }
 
 module.exports = Parser;

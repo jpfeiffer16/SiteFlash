@@ -5,7 +5,10 @@ const stream = require('stream'),
       mkdirp = require('mkdirp'),
       Url = require('url'),
       jsdom = require("jsdom"),
-      { JSDOM } = jsdom;
+      
+      Parser = require('./parser');
+
+let parser = Parser();
 
 let exportMethod = function(siteName) {
   let dirpath = path.join(
@@ -34,36 +37,18 @@ let exportMethod = function(siteName) {
     // console.log(contentType);
     if (parse && contentType) {
       let strRepr = content.toString('utf-8');
-
-      if (~contentType.indexOf('text/html')) {
-        let result = parseHtml(strRepr, url);
-        parsedUrls = result.urls;
-        let hashResult = fsTransformUrlToFile(url);
-        fs.writeFile(
-          hashResult.fsPath,
-          result.newContent,
-          doneWritting
-        );
-        writeToHashMapFile(url, contentType, hashResult.webPath);
-      } else if(~contentType.indexOf('text/css')) { 
-        let result = parseCss(strRepr, url);
-        parsedUrls = result.urls;
-        let hashResult = fsTransformUrlToFile(url);
-        fs.writeFile(
-          hashResult.fsPath,
-          result.newContent,
-          doneWritting
-        );
-        writeToHashMapFile(url, contentType, hashResult.webPath);
-      } else {
-        let hashResult = fsTransformUrlToFile(url);
-        fs.writeFile(
-          hashResult.fsPath,
-          content,
-          doneWritting
-        );
-        writeToHashMapFile(url, contentType, hashResult.webPath);
-      }
+      // let parsedUrls = [];
+      let parseResult = parser.parse(strRepr, contentType, (repUrl) => {
+        parsedUrls.push(Url.resolve(url, repUrl));
+        return fsTransformUrlToFile(repUrl).webPath;
+      });
+      let hashResult = fsTransformUrlToFile(url);
+      fs.writeFile(
+        hashResult.fsPath,
+        parseResult.newContent,
+        doneWritting
+      );
+      writeToHashMapFile(url, contentType, hashResult.webPath);
     } else {
       let hashResult = fsTransformUrlToFile(url);
       fs.writeFile(
@@ -82,74 +67,6 @@ let exportMethod = function(siteName) {
   function log(obj, cb) {
     logStream.write(`${ obj }\n`);
     cb(obj);
-  }
-
-  function parseHtml(html, baseUrl) {
-    let urls = [];
-
-    let dom = new JSDOM(html);
-
-    //href's
-    let hrefElements = dom.window.document.querySelectorAll('[href]');
-    hrefElements.forEach((el) => {
-      if (el.href != '#' && !el.href.startsWith('javascript:')) {
-        let foundUrl = Url.resolve(baseUrl, el.href);
-        urls.push(foundUrl);
-        el.href = fsTransformUrlToFile(foundUrl).webPath;
-      }
-    });
-
-    //src's
-    let srcElements = dom.window.document.querySelectorAll('[src]');
-    srcElements.forEach((el) => {
-      let foundUrl = Url.resolve(baseUrl, el.src);
-      urls.push(foundUrl);
-      el.src = fsTransformUrlToFile(foundUrl).webPath;
-    });
-
-    //style's
-    let styleElements = dom.window.document.querySelectorAll('[style]');
-    styleElements.forEach((el) => {
-      let results = parseCss(el.getAttribute('style'), baseUrl);
-
-      el.setAttribute('style', results.newContent);
-      if (results.urls.length > 0) {
-        urls.concat(results);
-      }
-    });
-
-    let comment = dom.window.document.createComment(`PAGE: ${ baseUrl }`);
-    dom.window.document.appendChild(comment);
-    
-    // dom.window.close();
-
-    return {
-      urls,
-      newContent: dom.serialize()
-    }
-  }
-
-  function parseCss(css, baseUrl) {
-    let urls = [];
-    let newContent = css;
-    let urlRegex = /url\(.*?('|")?\)/g
-    let match = null;
-    while (match = urlRegex.exec(newContent)) {
-      let finalMatch = match[0]
-        .replace(/url\(("|')?/g, '')
-        .replace(/("|')?\)/g, '');
-      let foundUrl = Url.resolve(baseUrl, finalMatch)
-      urls.push(foundUrl);
-      newContent = newContent
-        .substring(0, match.index) + 
-          `url("${ fsTransformUrlToFile(foundUrl).webPath}")` +
-          newContent.substring(match.index + match[0].length);
-    }
-
-    return {
-      urls,
-      newContent
-    }
   }
 
   function fsTransformUrlToFile(url) {

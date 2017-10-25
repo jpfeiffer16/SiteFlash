@@ -3,7 +3,6 @@ const http = require('http'),
       path = require('path'),
       fs = require('fs');
 
-
 function fsTransformUrlToFileName(url) {
   const URL = require('url');
   let urlObj = URL.parse(url);
