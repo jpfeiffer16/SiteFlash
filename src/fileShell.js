@@ -38,32 +38,40 @@ let exportMethod = function(siteName) {
       if (~contentType.indexOf('text/html')) {
         let result = parseHtml(strRepr, url);
         parsedUrls = result.urls;
+        let hashResult = fsTransformUrlToFile(url);
         fs.writeFile(
-          fsTransformUrlToFile(url).fsPath,
+          hashResult.fsPath,
           result.newContent,
           doneWritting
         );
+        writeToHashMapFile(url, contentType, hashResult.webPath);
       } else if(~contentType.indexOf('text/css')) { 
         let result = parseCss(strRepr, url);
         parsedUrls = result.urls;
+        let hashResult = fsTransformUrlToFile(url);
         fs.writeFile(
-          fsTransformUrlToFile(url).fsPath,
+          hashResult.fsPath,
           result.newContent,
           doneWritting
         );
+        writeToHashMapFile(url, contentType, hashResult.webPath);
       } else {
+        let hashResult = fsTransformUrlToFile(url);
         fs.writeFile(
-          fsTransformUrlToFile(url).fsPath,
+          hashResult.fsPath,
           content,
           doneWritting
         );
+        writeToHashMapFile(url, contentType, hashResult.webPath);
       }
     } else {
+      let hashResult = fsTransformUrlToFile(url);
       fs.writeFile(
-        fsTransformUrlToFile(url).fsPath,
+        hashResult.fsPath,
         content,
         doneWritting
       );
+      writeToHashMapFile(url, contentType, hashResult.webPath);
     }
 
     return {
@@ -167,6 +175,16 @@ let exportMethod = function(siteName) {
       fsPath: path.join(dirPath, hash),
       webPath: hash
     }
+  }
+  
+  function writeToHashMapFile(url, contentType, hash) {
+    fs.appendFileSync(
+      path.join(
+        dirpath,
+        'map'
+      ),
+      `${ url }|${ contentType }|${ hash }\n`
+    );
   }
 
   return {
