@@ -19,6 +19,7 @@ module.exports = function(baseUrl, siteName) {
   recurse(baseUrl.href, (state) => {
     console.log('Linking index');
     linkIndex();
+    createInfo();
   });
 
   function recurse(url, cb) {
@@ -85,5 +86,18 @@ module.exports = function(baseUrl, siteName) {
         shell.log(`index.html -> ${ hash }`, console.log);
       }
     );
+  }
+
+  function createInfo() {
+    let info = {
+      domain: baseUrl.host
+    };
+    fs.writeFileSync(
+      path.join('./', 'sites', siteName, 'info.json'),
+      JSON.stringify(info),
+      'utf8'
+    );
+    shell.log('creating info file -> info.json', console.log);
+    shell.log(JSON.stringify(info), console.log);
   }
 }

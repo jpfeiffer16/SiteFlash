@@ -70,10 +70,10 @@ let Parser = function() {
         .replace(/url\(("|')?/g, '')
         .replace(/("|')?\)/g, '');
       // let foundUrl = Url.resolve(baseUrl, finalMatch)
-      urls.push(foundUrl);
+      // urls.push(foundUrl);
       newContent = newContent
         .substring(0, match.index) + 
-          `url("${ replaceMethod(foundUrl) }")` +
+          `url("${ replaceMethod(finalMatch) }")` +
           newContent.substring(match.index + match[0].length);
     }
 
@@ -83,9 +83,27 @@ let Parser = function() {
     }
   }
 
+  function shouldParse(contentType) {
+    return (
+      contentType
+        .indexOf('text/html') != -1 ||
+      contentType
+        .indexOf('text/css') != -1
+    );
+  }
+  
   return {
-    parse
+    parse,
+    shouldParse
   };
 }
+
+// Parser.prototype.shouldParse = function(contentType) {
+//   return 
+//     contentType
+//       .indexOf('text/html') != -1 ||
+//     contentType
+//       .indexOf('text/css') != -1;
+// }
 
 module.exports = Parser;

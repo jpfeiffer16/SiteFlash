@@ -37,15 +37,30 @@ let exportMethod = function(siteName) {
     // console.log(contentType);
     if (parse && contentType) {
       let strRepr = content.toString('utf-8');
+      let resultContent = content;
       // let parsedUrls = [];
-      let parseResult = parser.parse(strRepr, contentType, (repUrl) => {
-        parsedUrls.push(Url.resolve(url, repUrl));
-        return fsTransformUrlToFile(repUrl).webPath;
-      });
+      if (parser.shouldParse(contentType)) {
+        let parseResult = parser.parse(strRepr, contentType, (repUrl) => {
+          let result = repUrl;
+          if (
+            !repUrl == '' &&
+            !repUrl.startsWith('mailto:') &&
+            !repUrl.startsWith('about:') &&
+            !repUrl.startsWith('data:') &&
+            !repUrl.startsWith('tel:')
+          ) {
+            parsedUrls.push(Url.resolve(url, repUrl));
+            
+            result = fsTransformUrlToFile(repUrl).webPath;
+          }
+          return result;
+        });
+        resultContent = parseResult.newContent;
+      }
       let hashResult = fsTransformUrlToFile(url);
       fs.writeFile(
         hashResult.fsPath,
-        parseResult.newContent,
+        resultContent,
         doneWritting
       );
       writeToHashMapFile(url, contentType, hashResult.webPath);

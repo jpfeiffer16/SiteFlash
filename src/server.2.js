@@ -76,20 +76,25 @@ module.exports = function(siteName, port) {
       let hash = fsTransformUrlToFileName(req.url);
       let mapObj = urlMap[hash];
       if (!mapObj || parser.shouldParse(mapObj.contentType)) {
-        fs.readFile(path.join(dirName, hash), 'utf8', (err, content) => {
-          if (err) {
+        // let parsedResult = Cachius.cache(() => {
+          let results = null;
+          try {
+            let fileContents = fs.readFileSync(path.join(dirName, hash), 'utf8');
+            results = parse(fileContents, req.url);
+          } catch(err) {
             console.error(err);
-            //Set 404 status and return an error response
-            res.status = 404;
-            res.end();
-          } else {
-            
-            let parsedResult = parse(content, req.url);
-            res.setHeader('Content-Type', mapObj.contentType);
-            res.write(parsedResult.newContent);
-            res.end();
           }
-        });
+          return results;
+        // }, hash);
+        if (parsedResult != null && mapObj !== undefined) {
+          res.setHeader('Content-Type', mapObj.contentType);
+          res.write(parsedResult.newContent);
+          res.end();
+        } else {
+          //Set 404 status and return an error response
+          res.status = 404;
+          res.end();
+        }
       } else {
         fs.createReadStream(path.join(dirName, hash)).pipe(res);
       }
