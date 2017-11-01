@@ -1,13 +1,4 @@
 Steps for the move to fs-server compliant spidering/saving process
 
-1. Change around the code in the fileShell as much as necessary to get it to write a
-    url map to a sqlite db in the root of the site folder that will be a map between
-    hashes, content types, and urls per url hit. This will be used to re-construct
-    the original pattern on the way out as the server serves up the original content.
-2. Decouple the parse methods for the different content types into their own section,
-    and have a callback that get's called for every found url and controles what that
-    value is saved as so it can be made bi-directional
-3. Re-write old fileshell code to use these new methods.
-4. Use the new methods to write new code for the server to use to transform urls
-    on the way out on-the-fly. Possible caching usecase if it is not initially
-    performant.y
+1. Server:          Need a more effective caching mechanism.
+2. Server/Spider:   Need way to differenciate between querystring and path.

@@ -73,7 +73,7 @@ module.exports = function(baseUrl, siteName) {
 
   function linkIndex() {
     let md5sum = crypto.createHash('md5');
-    md5sum.update(baseUrl.path);
+    md5sum.update(baseUrl.href);
     let hash = md5sum.digest('hex');
     fs.link(
       path.join('./', 'sites', siteName, hash),

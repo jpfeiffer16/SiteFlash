@@ -42,6 +42,7 @@ let exportMethod = function(siteName) {
       if (parser.shouldParse(contentType)) {
         let parseResult = parser.parse(strRepr, contentType, (repUrl) => {
           let result = repUrl;
+          let thisParsedUrl = Url.resolve(url, repUrl);
           if (
             !repUrl == '' &&
             !repUrl.startsWith('mailto:') &&
@@ -49,9 +50,9 @@ let exportMethod = function(siteName) {
             !repUrl.startsWith('data:') &&
             !repUrl.startsWith('tel:')
           ) {
-            parsedUrls.push(Url.resolve(url, repUrl));
+            parsedUrls.push(thisParsedUrl);
             
-            result = fsTransformUrlToFile(repUrl).webPath;
+            result = fsTransformUrlToFile(thisParsedUrl).webPath;
           }
           return result;
         });
@@ -85,9 +86,8 @@ let exportMethod = function(siteName) {
   }
 
   function fsTransformUrlToFile(url) {
-    const URL = require('url');
-    let parsedUrl = Url.parse(url);
-    url = parsedUrl.path;
+    // let parsedUrl = Url.parse(url);
+    // url = parsedUrl.path;
     
     let crypto = require('crypto');
     let md5sum = crypto.createHash('md5');
@@ -110,12 +110,13 @@ let exportMethod = function(siteName) {
   }
   
   function writeToHashMapFile(url, contentType, hash) {
+    let parsedUrl = Url.parse(url);
     fs.appendFileSync(
       path.join(
         dirpath,
         'map'
       ),
-      `${ url }|${ contentType }|${ hash }\n`
+      `${ url }|${ parsedUrl.host }|${ parsedUrl.path }|${ contentType }|${ hash }\n`
     );
   }
 
