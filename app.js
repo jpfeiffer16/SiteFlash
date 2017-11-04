@@ -4,6 +4,7 @@ program
   .version(require('./package.json').version)
   .option('-s, --site [string]', 'site name')
   .option('-e, --export [boolean]', 'export site')
+  .option('-m --middleware [string]', 'middleware to include in requests')
   .arguments('[url]')
   .action((url) => {
     program.url = url;
@@ -28,5 +29,5 @@ if (program.export) {
     console.error('Must include a url');
     process.exit(1);
   }
-  require('./src/spider')(program.url, program.site);
+  require('./src/spider')(program.url, program.site, program.middleware);
 }

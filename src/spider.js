@@ -5,12 +5,35 @@ const request = require('request'),
       path = require('path'),
       crypto = require('crypto');
 
-module.exports = function(baseUrl, siteName) {
+module.exports = function(baseUrl, siteName, middleware) {
+  let middlewares = [];
   baseUrl = Url.parse(baseUrl);
 
   if (!baseUrl.href) {
     console.error('Must include a Base URL!');
     process.exit(1);
+  }
+
+  if (middleware.trim()) {
+    let params = [];
+    let values = [];
+    middleware
+      .trim()
+      .split(':')
+      .forEach((item, i) => {
+        // i % 2 > 0 ? values.push(item) : params.push(item);
+        i % 2 > 0 ? values.push(item) : params.push(item);
+      });
+    params.forEach((param, i) => {
+      middlewares.push({
+        module: require(path.join(
+          __dirname,
+          'middleware',
+          param
+        )),
+        input: values[i]
+      });
+    });
   }
 
   let masterUrlList = [];
@@ -22,7 +45,23 @@ module.exports = function(baseUrl, siteName) {
   });
 
   function recurse(url, cb) {
+    let thisParsedUlr = Url.parse(url);
+    let stateObj = {
+      response: null,
+      url: thisParsedUlr
+    };
+
     masterUrlList.push(url);
+
+    //Invoke middleware pre-request
+    middlewares.forEach((middleware) => {
+      if (middleware.module.preRequest) {
+        stateObj = middleware.module.preRequest(stateObj, middleware.input);
+        // console.log('State obj:');
+        // console.log(stateObj);
+      }
+    });
+    url = stateObj.url.href;
     request.get({
       url,
       encoding: null
@@ -31,7 +70,17 @@ module.exports = function(baseUrl, siteName) {
         shell.log(err, console.error);
         return;
       }
-      if (Url.parse(url).host == baseUrl.host) {
+      if (thisParsedUlr.host == baseUrl.host) {
+        stateObj.response = response;
+
+        //Invoke middleware post-request
+        middlewares.forEach((middleware) => {
+          if (middleware.module.postRequest) {
+            stateObj = middleware.module.postRequest(stateObj, middleware.input);
+          }
+        });
+        url = stateObj.url.href;
+
         let newUrls = shell.process(
           url,
           response.body,
@@ -54,10 +103,7 @@ module.exports = function(baseUrl, siteName) {
           }
         });
         if (cb) {
-          cb({
-            response,
-            url: Url.parse(url)
-          });
+          cb(stateObj);
         }
       } else {
         shell.process(
