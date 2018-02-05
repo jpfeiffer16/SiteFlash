@@ -3,3 +3,4 @@ sites/
 exports/
 .vscode/
 .zip
+coverage/
