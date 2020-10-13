@@ -10,16 +10,16 @@
   "author": "Joe Pfeiffer",
   "license": "MIT",
   "dependencies": {
-    "archiver": "^2.0.0",
-    "commander": "^2.11.0",
-    "jsdom": "^11.1.0",
-    "mkdirp": "^0.5.1",
-    "request": "^2.81.0"
+    "archiver": "^2.1.1",
+    "commander": "^2.20.3",
+    "jsdom": "^11.12.0",
+    "mkdirp": "^0.5.5",
+    "request": "^2.88.2"
   },
   "optionalDependencies": {
     "ascii-progress": "^1.0.5"
   },
   "devDependencies": {
-    "jasmine": "^2.9.0"
+    "jasmine": "^2.99.0"
   }
 }
